@@ -73,7 +73,11 @@ class Sqlite < Formula
     ]
     args << "--enable-readline" << "--disable-editline" if build.with? "readline"
 
-    system "./configure", *args
+    # FIXME: Necessary?
+    # readline_prefix = Formula["readline"].opt_prefix
+    # args << "--with-readline-lib=#{readline_prefix}/lib"
+    # args << "--with-readline-inc=#{readline_prefix}/include"
+
     system "make", "install"
 
     if build.with? "functions"
@@ -142,5 +146,14 @@ class Sqlite < Formula
 
     names = shell_output("#{bin}/sqlite3 < #{path}").strip.split("\n")
     assert_equal %w[Sue Tim Bob], names
+  end
+
+  if build.with? "readline"
+    test do
+      linked_libs = shell_output("otool -L #{bin}/sqlite3").split("\n")
+
+      assert linked_libs.grep(/libreadline/).any?,
+        "Expected libreadline in linked dylibs, but it was not."
+    end
   end
 end
